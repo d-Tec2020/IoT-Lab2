@@ -2,24 +2,28 @@ import time
 import json
 from datetime import datetime, timezone, timedelta
 import Adafruit_DHT
+import RPi.GPIO as GPIO
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTShadowClient
 
 
 # 温湿度センサーのピン番号と種類を指定
-sensor_pin = 4  # 例: Raspberry PiのGPIOピン番号
+sensor_pin = 14  # 例: Raspberry PiのGPIOピン番号
 sensor_type = Adafruit_DHT.DHT22  # センサーの種類に合わせて変更
 
 # LEDの設定
-led_pin = 17  # GPIOピン番号
+led_pin = 23  # GPIOピン番号
+led_state = "GPIO.LOW"
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(led_pin, GPIO.OUT)
 
 # AWS IoT Coreの設定
-iot_client_id = "7707-IoT-device"
-iot_endpoint = "a3uh24rj8jsjzi-ats.iot.ap-northeast-1.amazonaws.com"
-iot_root_ca = "AmazonRootCA1.pem"
-iot_private_key = "fa308b7c851d14752980b31cb1e1d2fbe7d8e32da3827d73616c3f452d134e80-private.pem.key"
-iot_cert = "fa308b7c851d14752980b31cb1e1d2fbe7d8e32da3827d73616c3f452d134e80-certificate.pem.crt"
-topic = "7707-iot-device"
+iot_client_id = "xx-IoT-device"
+iot_endpoint = "xxx.iot.ap-northeast-1.amazonaws.com"
+iot_root_ca = "xxx.pem"
+iot_private_key = "xxx-private.pem.key"
+iot_cert = "xxx-certificate.pem.crt"
+topic = "data/xx-iot-device"
 
 # AWS IoT MQTTクライアントの初期化
 mqtt_client = AWSIoTMQTTClient(iot_client_id)
@@ -40,12 +44,8 @@ shadow_handler.connect()
 # シャドウハンドラを作成
 shadow = shadow_handler.createShadowHandlerWithName(iot_client_id, True)
 
-# LED状態(初期状態)
-led_state = "OFF"
-
 # 待ち時間制御(初期状態)
-wait_time = 3
-
+wait_time = 6
 
 def customCallback(payload, responseStatus, token):
     global wait_time
@@ -57,8 +57,8 @@ def customCallback(payload, responseStatus, token):
     }
 
     if responseStatus == "accepted":
-        print("Shadow Update Accepted")
-        print("Payload: " + json.dumps(payload))
+        # print("Shadow Update Accepted")
+        # print("Payload: " + json.dumps(payload))
 
         # デバイスシャドウから取得したデータを解析
         try:
@@ -98,15 +98,24 @@ def get_current_time():
 def main():
     global wait_time
     global led_state
+    global led_pin
     global iot_client_id
+    global sensor_type
+    global sensor_pin
+
+    print(f"初期待ち時間：{wait_time}")
+    print(f"初期LED状態：{led_state}")
 
     while True:
         try:
-            print(f"待ち時間：{wait_time}")
-            print(f"LED状態：{led_state}")
 
             # デバイスシャドウからデータを取得
             get_shadow_data()
+
+            print(f"待ち時間：{wait_time}")
+            print(f"LED状態：{led_state}")
+
+            GPIO.output(led_pin, led_state)
 
             # 温湿度センサーからデータを読み取る
             humidity, temperature = Adafruit_DHT.read_retry(sensor_type, sensor_pin)
@@ -125,24 +134,26 @@ def main():
                 mqtt_client.publish(topic, message, 1)
 
                 print(f"Data sent: {message}")
+                print("------------------------------")
 
             else:
                 print("Failed to retrieve sensor data.")
 
             # 待機（待ち時間はdevice shadowにより変化）
-            time.sleep(wait_time)
+            time.sleep(int(wait_time))
 
         except Exception as e:
             print(f"Error: {e}")
-            time.sleep(wait_time)
+            time.sleep(int(wait_time))
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        pass
+        print("Program terminated by user")
     finally:
         # 接続のクリーンアップ
         shadow_handler.disconnect()
         mqtt_client.disconnect()
+        GPIO.cleanup()
         print("切断完了")
