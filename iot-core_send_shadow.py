@@ -16,9 +16,9 @@ led_pin = 17  # GPIOピン番号
 # AWS IoT Coreの設定
 iot_client_id = "7707-IoT-device"
 iot_endpoint = "a3uh24rj8jsjzi-ats.iot.ap-northeast-1.amazonaws.com"
-iot_root_ca = "iotcore-key/AmazonRootCA1.pem"
-iot_private_key = "iotcore-key/fa308b7c851d14752980b31cb1e1d2fbe7d8e32da3827d73616c3f452d134e80-private.pem.key"
-iot_cert = "iotcore-key/fa308b7c851d14752980b31cb1e1d2fbe7d8e32da3827d73616c3f452d134e80-certificate.pem.crt"
+iot_root_ca = "AmazonRootCA1.pem"
+iot_private_key = "fa308b7c851d14752980b31cb1e1d2fbe7d8e32da3827d73616c3f452d134e80-private.pem.key"
+iot_cert = "fa308b7c851d14752980b31cb1e1d2fbe7d8e32da3827d73616c3f452d134e80-certificate.pem.crt"
 topic = "7707-iot-device"
 
 # AWS IoT MQTTクライアントの初期化
