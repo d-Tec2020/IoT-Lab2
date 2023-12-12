@@ -9,7 +9,7 @@ from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTShadowClient
 
 # 温湿度センサーのピン番号と種類を指定
 sensor_pin = 14  # 例: Raspberry PiのGPIOピン番号
-sensor_type = Adafruit_DHT.DHT22  # センサーの種類に合わせて変更
+sensor_type = Adafruit_DHT.DHT11  # センサーの種類に合わせて変更
 
 # LEDの設定
 led_pin = 23  # GPIOピン番号
@@ -18,12 +18,12 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(led_pin, GPIO.OUT)
 
 # AWS IoT Coreの設定
-iot_client_id = "xx-IoT-device"
-iot_endpoint = "xxx.iot.ap-northeast-1.amazonaws.com"
-iot_root_ca = "xxx.pem"
-iot_private_key = "xxx-private.pem.key"
-iot_cert = "xxx-certificate.pem.crt"
-topic = "data/xx-iot-device"
+iot_client_id = "1111-IoT-device"
+iot_endpoint = "a3uh24rj8jsjzi-ats.iot.ap-northeast-1.amazonaws.com"
+iot_root_ca = "AmazonRootCA1.pem"
+iot_private_key = "76a8224890cc19b7552e571dbf36207249091b79aba9890d1206c4aca73b3945-private.pem.key"
+iot_cert = "76a8224890cc19b7552e571dbf36207249091b79aba9890d1206c4aca73b3945-certificate.pem.crt"
+topic = "data/1111-iot-device"
 
 # AWS IoT MQTTクライアントの初期化
 mqtt_client = AWSIoTMQTTClient(iot_client_id)
