@@ -144,7 +144,7 @@ def main():
 
         except Exception as e:
             print(f"Error: {e}")
-            time.sleep(int(wait_time))
+            time.sleep(6)
 
 if __name__ == "__main__":
     try:
