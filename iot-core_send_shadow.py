@@ -13,17 +13,17 @@ sensor_type = Adafruit_DHT.DHT11  # センサーの種類に合わせて変更
 
 # LEDの設定
 led_pin = 23  # GPIOピン番号
-led_state = "GPIO.LOW"
+led_state = GPIO.LOW
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(led_pin, GPIO.OUT)
 
 # AWS IoT Coreの設定
-iot_client_id = "1111-IoT-device"
-iot_endpoint = "a3uh24rj8jsjzi-ats.iot.ap-northeast-1.amazonaws.com"
-iot_root_ca = "AmazonRootCA1.pem"
-iot_private_key = "76a8224890cc19b7552e571dbf36207249091b79aba9890d1206c4aca73b3945-private.pem.key"
-iot_cert = "76a8224890cc19b7552e571dbf36207249091b79aba9890d1206c4aca73b3945-certificate.pem.crt"
-topic = "data/1111-iot-device"
+iot_client_id = "xx-IoT-device"
+iot_endpoint = "XXX.iot.ap-northeast-1.amazonaws.com"
+iot_root_ca = "XXX.pem"
+iot_private_key = "XXX-private.pem.key"
+iot_cert = "XXX-certificate.pem.crt"
+topic = "data/xx-iot-device"
 
 # AWS IoT MQTTクライアントの初期化
 mqtt_client = AWSIoTMQTTClient(iot_client_id)
@@ -115,11 +115,15 @@ def main():
             print(f"待ち時間：{wait_time}")
             print(f"LED状態：{led_state}")
 
-            GPIO.output(led_pin, led_state)
+            # led_stateがGPIO.HIGHだったら1、LOWだったら0を出力
+            if led_state == "GPIO.HIGH":
+                led_set = 1
+            else:
+                led_set = 0
 
+            GPIO.output(led_pin, led_set)
             # 温湿度センサーからデータを読み取る
             humidity, temperature = Adafruit_DHT.read_retry(sensor_type, sensor_pin)
-
             # 現在時刻取得
             current_time = get_current_time()
 
@@ -151,6 +155,10 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("Program terminated by user")
+        shadow_handler.disconnect()
+        mqtt_client.disconnect()
+        GPIO.cleanup()
+        print("切断完了1")
     finally:
         # 接続のクリーンアップ
         shadow_handler.disconnect()
