@@ -18,7 +18,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(led_pin, GPIO.OUT)
 
 # AWS IoT Coreの設定
-iot_client_id = "xx-IoT-device"
+iot_client_id = "xx-iot-device"
 iot_endpoint = "XXX.iot.ap-northeast-1.amazonaws.com"
 iot_root_ca = "XXX.pem"
 iot_private_key = "XXX-private.pem.key"
@@ -122,15 +122,19 @@ def main():
                 led_set = 0
 
             GPIO.output(led_pin, led_set)
+            
             # 温湿度センサーからデータを読み取る
             humidity, temperature = Adafruit_DHT.read_retry(sensor_type, sensor_pin)
             # 現在時刻取得
             current_time = get_current_time()
 
             if humidity is not None and temperature is not None:
+                # 温度と湿度を整数に変換
+                temperature = int(temperature)
+                humidity = int(humidity)
+
                 # 送信するメッセージのデータ
                 data = {"DEVICE_NAME": iot_client_id, "TIMESTAMP": current_time, "TEMPERATURE": temperature, "HUMIDITY": humidity}
-
                 # メッセージをJSON形式に変換
                 message = json.dumps(data)
 
@@ -159,6 +163,9 @@ if __name__ == "__main__":
         mqtt_client.disconnect()
         GPIO.cleanup()
         print("切断完了1")
+    except Exception as e:
+        print(f"Error: {e}")
+        time.sleep(6)
     finally:
         # 接続のクリーンアップ
         shadow_handler.disconnect()
