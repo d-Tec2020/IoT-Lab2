@@ -19,7 +19,7 @@ GPIO.setup(led_pin, GPIO.OUT)
 
 # AWS IoT Coreの設定
 iot_client_id = "xx-iot-device"
-iot_endpoint = "XXX.iot.ap-northeast-1.amazonaws.com"
+iot_endpoint = "XXX"
 iot_root_ca = "XXX.pem"
 iot_private_key = "XXX-private.pem.key"
 iot_cert = "XXX-certificate.pem.crt"
@@ -34,6 +34,13 @@ mqtt_client.configureCredentials(iot_root_ca, iot_private_key, iot_cert)
 shadow_handler = AWSIoTMQTTShadowClient(iot_client_id)
 shadow_handler.configureEndpoint(iot_endpoint, 8883)
 shadow_handler.configureCredentials(iot_root_ca, iot_private_key, iot_cert)
+
+# disconnectTimeoutの設定
+mqtt_client.configureAutoReconnectBackoffTime(1, 32, 20)
+mqtt_client.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
+mqtt_client.configureDrainingFrequency(2)  # Draining: 2 Hz
+mqtt_client.configureConnectDisconnectTimeout(10)  # 10 seconds
+mqtt_client.configureMQTTOperationTimeout(5)  # 5 seconds
 
 # AWS IoT Coreに接続
 mqtt_client.connect()
@@ -65,11 +72,16 @@ def customCallback(payload, responseStatus, token):
             data = json.loads(payload)
             if 'state' in data and 'desired' in data['state']:
                 desired_state = data['state']['desired']
-                wait_time = desired_state.get('wait-time')
-                led_state = desired_state.get('LED-state')
+
+                # 'wait-time'および'LED-state'キーが存在するか確認
+                if 'wait-time' in desired_state:
+                    wait_time = desired_state['wait-time']
+
+                if 'LED-state' in desired_state:
+                    led_state = desired_state['LED-state']
 
         except Exception as e:
-            print(f"Error parsing Shadow data: {e}")
+            print(f"デバイスシャドウデータの解析エラー: {e}")
 
     elif responseStatus == "rejected":
         print("Shadow Update Rejected")
@@ -77,6 +89,7 @@ def customCallback(payload, responseStatus, token):
         print("Shadow Update Timed Out")
 
     return result
+
 
 def get_shadow_data():
     # デバイスシャドウを取得
@@ -158,17 +171,19 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("Program terminated by user")
-        shadow_handler.disconnect()
-        mqtt_client.disconnect()
-        GPIO.cleanup()
-        print("切断完了1")
+        print("ユーザーによってプログラムが中断されました")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"エラー: {e}")
         time.sleep(6)
     finally:
-        # 接続のクリーンアップ
-        shadow_handler.disconnect()
-        mqtt_client.disconnect()
-        GPIO.cleanup()
-        print("切断完了")
+        try:
+            # 接続のクリーンアップ
+            shadow_handler.disconnect()
+            print("シャドウ切断")
+            mqtt_client.disconnect()
+            print("MQTT切断")
+        except Exception as e:
+            print(f"切断エラー: {e}")
+        finally:
+            GPIO.cleanup()
+            print("GPIOクリーンアップ完了")
